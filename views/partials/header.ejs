@@ -1,0 +1,19 @@
+<nav class="navbar navbar-default bg-faded" role="navigation">
+    <div class="container-fluid">
+
+        <div class="navbar-header">
+            <a class="navbar-brand" href="#">
+                <span class="glyphicon glyphicon glyphicon-tree-deciduous"></span>
+                Jawbone Viewer
+            </a>
+        </div>
+
+        <ul class="nav navbar-nav">
+            <% if (locals.user) { %>
+                <li><a href="/logout"><span class="glyphicon glyphicon-log-out"></span> Logout (<%= user.profile.first %> <%=  user.profile.last %>)</a></li>
+            <% } %>
+
+        </ul>
+      
+    </div>
+</nav>
