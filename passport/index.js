@@ -3,12 +3,12 @@ var { ids }  = require('../config')
 
 // set up the user model
 passport.serializeUser((user, done) => {
-	console.log('serialise the user : ', user);
+	//console.log('serialise the user : ', user);
 	done(null, user);
 })
 
 passport.deserializeUser((id, done) => {
-	console.log('deserialise the user : ', id);
+	//console.log('deserialise the user : ', id);
 	
 	// User.get(id, function (err, user) {
 	//   done(err, user);

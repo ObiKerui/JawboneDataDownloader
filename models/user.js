@@ -56,30 +56,52 @@ const user = new Schema({
 const User = userdb.model('User', user)
 
 //------------------------------------------------------
+//  Util - handle response 
+//------------------------------------------------------
+const handleResponse = (err, result, cb) => {
+  if(err) {
+    cb(err)
+  } else {
+    cb(null, result)
+  }
+}
+
+const getIdField = () => {
+  return 'jawboneData.jawboneId'
+}
+
+//------------------------------------------------------
 //  GET ALL USERS
 //------------------------------------------------------
-const getAll = (cb) => {
-  const q = User.find({}).lean();
-  const tq = User.count();
-
-  q.exec((err, users) => {
-    if(err) {
-      console.log('error with query: ', err);
-      return cb(null);
-    }
-
-    tq.exec((err, count) => {
-      cb({
-        total: count,
-        max: count,
-        offset: 0,
-        sortBy: undefined,
-        data: users
-      });
-    })
+const get = (filter, cb) => {
+  User.find(filter, (err, result) => {
+    handleResponse(err, result, cb)
   })
 }
 
+// const get = (filter, cb) => {
+//   const q = User.find({}).lean();
+//   const tq = User.count();
+
+//   q.exec((err, users) => {
+//     if(err) {
+//       console.log('error with query: ', err);
+//       return cb(null);
+//     }
+
+//     tq.exec((err, count) => {
+//       cb({
+//         total: count,
+//         max: count,
+//         offset: 0,
+//         sortBy: undefined,
+//         data: users
+//       });
+//     })
+//   })
+// }
+
 module.exports = {
-  getAll
+  getIdField,
+  get
 }

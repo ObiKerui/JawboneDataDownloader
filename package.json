@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "start": "set NODE_ENV=development && node ./server",
-    "build": "webpack -d && copy client\\index.html dist\\index.html && webpack-dev-server --content-base dist/ --inline --hot",
-    "build:prod": "webpack -p && copy client\\index.html dist\\index.html"
+    "build": "webpack -d && copy client\\index.html public\\index.html && webpack-dev-server --content-base public/ --inline --hot",
+    "build:prod": "webpack -p && copy client\\index.html public\\index.html"
   },
   "author": "",
   "license": "ISC",
@@ -57,7 +57,7 @@
     "lodash.isarraylike": "^4.2.0",
     "material-ui": "^1.0.0-beta.8",
     "material-ui-icons": "^1.0.0-beta.5",
-    "moment": "^2.17.1",
+    "moment": "^2.19.1",
     "mongoose": "^4.6.4",
     "morgan": "^1.7.0",
     "normalizr": "^3.2.3",
@@ -73,6 +73,7 @@
     "react-document-title": "^2.0.3",
     "react-dom": "^15.5.0",
     "react-google-charts": "^1.5.5",
+    "react-moment": "^0.6.5",
     "react-pure-render": "^1.0.2",
     "react-redux": "^5.0.6",
     "react-router-dom": "^4.2.2",

@@ -13,10 +13,10 @@ const jbGroupMemberSchema = new Schema({
   user: { type: Schema.Types.ObjectId, ref: 'User' },
   addedBy: { type: Schema.Types.ObjectId, ref: 'User' },
   role: {
-        type: String,
-        enum : ['USER','ADMIN'],
-        default: 'USER'
-    }
+    type: String,
+    enum : ['USER','ADMIN'],
+    default: 'USER'
+  }
 }, {
   timestamps: true
 })
@@ -25,11 +25,13 @@ const jbGroupMemberSchema = new Schema({
 //  DEFINE GROUP SCHEMA
 //------------------------------------------------------
 const jbGroupSchema = new Schema({
+  owner: { type: Schema.Types.ObjectId, ref: 'User' },
   name: { type: String, required: true, minlength: 0, maxlength: 40 },
   description: { type: String, required: false, minlength: 0, maxlength: 200 },
   creationDate: { type: Date, required: true, default: moment().format() },
   type: { type: String, default: 'regular' },
   members: [ { type: Schema.Types.ObjectId, ref: 'jbGroupMemberSchema' } ],
+  admins: [ { type: Schema.Types.ObjectId, ref: 'jbGroupMemberSchema' } ],  
   photo: { data: Buffer, contentType: String, required: false },
   permissions: {
     canDelete : { type: Boolean, default: false },
@@ -79,6 +81,24 @@ const createDefaultGroup = (cb) => {
 const getDefaultGroup = (cb) => {
   Group.findOne({ type: 'default'}, (err, defGroup) => {
     handleReponse(err, defGroup, cb)
+  })
+}
+
+//------------------------------------------------------
+//  GET GROUP IF IT EXISTS
+//------------------------------------------------------
+const get = (filter, cb) => {
+  Group.find(filter, (err, group) => {
+    handleReponse(err, group, cb)
+  })
+}
+
+//------------------------------------------------------
+//  GET GROUP MEMBERS OF GROUP
+//------------------------------------------------------
+const getMembers = (id, cb) => {
+  GroupMember.find({ group: id }, (err, groupMembers) => {
+    handleReponse(err, groupMembers, cb)
   })
 }
 
@@ -180,8 +200,8 @@ const addMember = (params, cb) => {
 //------------------------------------------------------
 module.exports = {
   createDefaultGroup,
+  get,
   getDefaultGroup,
-  remove,
-  removeMembers,
-  addMember
+  getMembers,
+  remove
 }

@@ -1,6 +1,5 @@
 const async = require('async')
-const Groups = require('../models/jbGroup')
-const Users = require('../models/user')
+const { group, user } = require('../models')
 
 //--------------------------------------------------------------
 // SET UP JAWBONE IDS
@@ -35,7 +34,7 @@ const setUpJawboneIds = (cb) => {
 //----------------------------------------------------
 const removeDefaultGroup = (cb) => {
 
-	Groups.remove({ type: 'default' }, (msg) => {
+	group.remove({ type: 'default' }, (msg) => {
 		return cb(null, msg)
 	})
 }
@@ -45,7 +44,7 @@ const removeDefaultGroup = (cb) => {
 //--------------------------------------------------------------
 const createDefaultGroup = (cb) => {
 	
-	Groups.createDefaultGroup(function(newDefaultGroup) {
+	group.createDefaultGroup(function(newDefaultGroup) {
 		if(!newDefaultGroup) {
 			return cb('error creating default group');
 		} else {
@@ -59,14 +58,8 @@ const createDefaultGroup = (cb) => {
 //--------------------------------------------------------------
 const getAllUsers = (cb) => {
 
-	Users.getAll((users) => {
-		if(!users) {
-			console.log('null users executing..shouldnt')
-			cb(null)
-		} else {
-			console.log('return all users')
-			cb(null, users)
-		}
+	user.get({}, (err, users) => {
+		(err ? cb(null) : cb(users))
 	})
 }
 
@@ -89,7 +82,7 @@ const populateDefaultGroup = (defaultGroup, allUsers, cb) => {
 			role: 'USER'
 		}
 
-		Groups.addMember(params, (result) => {
+		group.addMember(params, (result) => {
 			if(!result) {
 				//console.log('user couldnt added to group')
 				innercb(null)
@@ -99,23 +92,13 @@ const populateDefaultGroup = (defaultGroup, allUsers, cb) => {
 			}
 		})
 	}, cb)
-
-	// async.each(allUsers.data, function(user, callback) {
-	// 	Groups.addMemberToDefault(user, function(err, result) {
-	// 		if(err) {
-	// 			return callback(err)
-	// 		} else {
-	// 			return callback(null)
-	// 		}
-	// 	})
-	// }, cb)
 }
 
 //----------------------------------------------------
 //  CONFIGURE DB
 //----------------------------------------------------
 const initDb = (db) => {
-	console.log('init the db')
+	//console.log('init the db')
 
 	async.waterfall([		
 		(callback) => {

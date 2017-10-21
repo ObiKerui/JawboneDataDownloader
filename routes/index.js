@@ -43,7 +43,7 @@ module.exports = (app, passport) => {
 	// render the user data page - must be logged in
 	//------------------------------------------------------------------------	
 	app.get('/userdata', [ isLoggedIn ], (req, res) => {
-		console.log('user : ', req.user)
+		//console.log('user : ', req.user)
 		res.render('pages/userdata', { user: req.user});
 	})
 
@@ -51,7 +51,7 @@ module.exports = (app, passport) => {
 	// render the super user data page - must be logged in and authorized
 	//------------------------------------------------------------------------	
 	app.get('/superuser-gateway', [isLoggedIn, isAuthorized], (req, res) => {
-		console.log('user : ', req.user)
+		//console.log('user : ', req.user)
 		res.render('pages/superuser-gateway', { user: req.user });
 	})
 

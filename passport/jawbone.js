@@ -1,13 +1,51 @@
 const JawboneStrategy = require('passport-oauth').OAuth2Strategy;
 const jawboneIds = require('../config')
-const { jawbone } = require('../models')
+const { jawbone, user } = require('../models')
 
 //  ----------------------------------------------------------------
 //  retrieve the jawbone user
 //  ----------------------------------------------------------------
-const retrieveUser = (params, cb) => {
-  const profile = jawbone.profile(params, (result) => {
-    return cb(result)
+const retrieveJBProfile = (access_token, cb) => {
+
+  //console.log('retrieve jawbone profile passport jawbone: ', params)
+
+  const user = {
+    jawboneData: {
+      access_token: access_token
+    }
+  }
+
+  jawbone.profile(user, (err, result) => {
+    if(err) {
+      cb(null)
+    } else {
+      cb(result)
+    }
+  })
+}
+
+//  ----------------------------------------------------------------
+//  create a user to store in session
+//  ----------------------------------------------------------------
+const createUser = (profile, token, refreshToken) => {
+  return {
+    image: profile.image,
+    last: profile.last,
+    first: profile.first,
+    jawboneData: {
+      jawboneId : profile.xid,
+      access_token : token,
+      refresh_token : refreshToken
+    }
+  }  
+}
+
+//  ----------------------------------------------------------------
+//  retrieve the jawbone user
+//  ----------------------------------------------------------------
+const retrieveSleeps = (user, cb) => {
+  jawbone.sleeps(user, (sleeps) => {
+    return cb(sleeps)
   })
 }
 
@@ -24,22 +62,13 @@ const configurePassport = (passport, configIds) => {
     callbackURL: configIds.jawboneAuth.callbackURL,
     passReqToCallback: true
   }, (req, token, refreshToken, profile, done) => {
-    
-    const params = {
-      user: req.user,
-      token,
-      refreshToken,
-      profile,
-      clientId : configIds.jawboneAuth.clientId,
-      secret: configIds.jawboneAuth.clientSecret
-    }
 
-    // retrieve user profile
-    retrieveUser(params, (user) => {
-      if(!user) {
-        done('error retrieving user : ', user)
+    retrieveJBProfile(token, (profile) => {
+      if(profile) {
+        const user = createUser(profile, token, refreshToken)
+        done(null, user)        
       } else {
-        done(null, user)
+        done('error retrieving user profile from jawbone')
       }
     })
   }))
@@ -50,37 +79,6 @@ module.exports = (passport, configIds) => {
     configure: configurePassport(passport, configIds)
   }
 }
-
-/*
-*   STORE THE UP/JAWBONE DATA
-*/
-// var storeUpData = function(data, callback) {
-
-//   var prof = data.profile[0];
-//   //console.log('profile: ' + JSON.stringify(prof));
-  
-//   user.getByJawboneId(prof.xid, function(getErr, userResult) {
-//     if(getErr) {
-//       console.log('error getting user: ' + JSON.stringify(getErr));
-//       return callback(getErr, null);
-//     }
-//     if(userResult) {
-//       user.update(prof, data, function(updateErr, updateResult) {
-//         if(updateErr) {
-//           console.log('error updating user: ' + JSON.stringify(updateErr));          
-//         }
-//         callback(updateErr, updateResult);
-//       });
-//     } else {
-//       user.create(prof, data, function(createErr, createResult) {
-//         if(createErr) {
-//           console.log('error creating user: ' + JSON.stringify(createErr));  
-//         }
-//         callback(createErr, createResult);
-//       });
-//     }
-//   });
-// }
 
 //---------------------------------------------
 //

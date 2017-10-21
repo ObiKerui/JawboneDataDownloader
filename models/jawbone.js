@@ -1,24 +1,34 @@
+const { ids } = require('../config')
 
 //------------------------------------------------------
 // UTIL - initialise JAWBONE UP
 //------------------------------------------------------
-const init = params => {
+const init = user => {
 
-	const { token, clientId, secret } = params
+	const { jawboneAuth } = ids
+	const { clientId, clientSecret } = jawboneAuth
+	const { jawboneData } = user
+	const { access_token } = jawboneData
 
-	console.log('params to jawbone: ', params)
+	console.log('user: ', user)
+	console.log('clientId: ', clientId)
+	console.log('secret: ', clientSecret)
+	console.log('token: ', access_token)
 
-	if(!token || !clientId || !secret) {
+	if(!access_token || !clientId || !clientSecret) {
 		return null
 	}
 
 	const options = {	
-		access_token: token,
+		access_token: access_token,
 		client_id: clientId,
-		client_secret: secret
+		client_secret: clientSecret
 	}
 
 	const up = require('jawbone-up')(options);
+
+	console.log('up is : ', up)
+
 	return up;
 }
 
@@ -37,18 +47,21 @@ const handleResponse = (err, result, cb) => {
 
 	if(err) {
 		console.log('error occured: ', err)
-		cb(null)
+		cb(err)
 	} else {		
 		console.log('result retrieved: ', result)
 
 		try {
 			const parsed = JSON.parse(result)
 			if(badStatus(parsed)) {
-				return cb(null)
+				return cb('error status ')
 			}
-			cb(parsed.data)
+
+			console.log('parsed data: ', parsed)
+
+			cb(null, parsed.data)
 		} catch(e) {
-			cb(null)
+			cb('error parsing data')
 		}
 	}
 }
@@ -56,9 +69,9 @@ const handleResponse = (err, result, cb) => {
 //------------------------------------------------------
 // RETRIEVE THE PROFILE 
 //------------------------------------------------------
-const profile = (params, cb) => {
+const profile = (user, cb) => {
 
-	const up = init(params)
+	const up = init(user)
 
 	if(!up) {
 		return cb('error - not a valid user')
@@ -72,19 +85,16 @@ const profile = (params, cb) => {
 //------------------------------------------------------
 // RETRIEVE THE SLEEPS 
 //------------------------------------------------------
-var sleeps = function(params, cb) {
+const sleeps = (user, cb) => {
 	
-	const up = init(params);
+	const up = init(user);
 
 	if(!up) {
 		return cb('error - not a valid user')
 	}
 
 	up.sleeps.get({ limit : 1000 }, (err, sleeps) => {
-		handleResponse(err, sleeps, (parsedSleepData) => {
-			console.log('retrieved parsed sleep data: ', parsedSleepData)
-			cb(parsedSleepData)
-		})
+		handleResponse(err, sleeps, cb)
 	})
 }
 

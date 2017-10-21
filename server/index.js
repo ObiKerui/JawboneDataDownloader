@@ -13,13 +13,18 @@ const passport = require('../passport')
 require('./sessions')(app, passport)
 
 //----------------------------------------------------
+//  CONFIGURE CORS SUPPORT IF REQUIRED
+//----------------------------------------------------
+require('./corsConfig')(app)
+
+//----------------------------------------------------
 //  CONFIGURE THE APPLICATION VIEW LOCATIONS
 //----------------------------------------------------
 //app.use(logger('dev'));
 // app.use('/fonts', express.static(__dirname + '/public/fonts'));
 // app.use('/assets', express.static(__dirname + '/public/assets'));
 // app.use('/styles', express.static(__dirname + '/public/styles'));
-// app.use('/scripts', express.static(__dirname + '/public/scripts'));
+app.use('/scripts', express.static(__dirname + '/../public/'));
 app.set('trust proxy', true);
 app.set('view engine', 'ejs');
 app.set('views', __dirname + '/../views');
