@@ -12,6 +12,7 @@ import FavoriteIcon from 'material-ui-icons/Favorite';
 import ShareIcon from 'material-ui-icons/Share';
 import ExpandMoreIcon from 'material-ui-icons/ExpandMore';
 import classNames from 'classnames';
+import GridList from './GridList'
 
 const styles = theme => ({
   card: {
@@ -89,6 +90,7 @@ class PanelCard extends React.Component {
           </CardActions>
           <Collapse in={this.state.expanded} transitionDuration="auto" unmountOnExit>
             <CardContent>
+              <GridList />
               <Typography paragraph type="body2">
                 Method:
               </Typography>

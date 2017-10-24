@@ -28,7 +28,8 @@ export default class JBChart extends React.Component {
         'backgroundColor.fill': '#00ffff',        
         'explorer': { 
           'actions': ['dragToZoom', 'rightClickToReset'],
-          'keepInBounds': false
+          'keepInBounds': false,
+          'maxZoomIn' : 0.1
         }
       },
       rows: [],

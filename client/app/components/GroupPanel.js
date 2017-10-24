@@ -20,7 +20,6 @@ import { loadGroups, loadGroup } from '../actions/groupsActions'
 import { loadUsers } from '../actions/usersActions'
 
 import ListElement from './ListElement'
-import SleepsManager from './SleepsManager'
 
 const styles = {
   card: {
@@ -84,7 +83,6 @@ const ListElem = (props) => {
     <div>{item}</div>
   )
 }
-
 
 // const ListItem = ({ item, key }) => (
 //   <div key={key}>{item}</div>
@@ -153,7 +151,6 @@ class GroupPanel extends React.Component {
             { DebugList(ListElement)(admins) }
           </TabContainer>
         </SwipeableViews>
-        <SleepsManager />
       </div>
     )    
   }

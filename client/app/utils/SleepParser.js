@@ -1,4 +1,4 @@
-import { ObjParser } from './GoogleGraphUtils'
+import { ObjParser } from '../components/Charts/GoogleGraphUtils'
 
 class SleepParser extends ObjParser {
     constructor(prop) {
@@ -37,7 +37,7 @@ class SleepParser extends ObjParser {
     			return 0
     	}
     }
-    
+
     makeDropDownFields() {
     	return [
     		{ value: 0, text: 'Asleep Time' },

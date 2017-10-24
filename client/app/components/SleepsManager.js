@@ -1,21 +1,29 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-
 import { connect } from 'react-redux'
 import { withRouter } from 'react-router-dom'
+
 import { loadSleeps } from '../actions/sleepActions'
 
-//import SleepGraphRenderer from './SleepGraphRenderer'
-import GoogleChart from './GoogleChart'
-import ChartActionBar from './ChartActionBar'
-import DatePicker from './DatePicker'
 import { makeSleepParser } from '../utils/SleepParser'
-import { preProcessData } from '../utils/GoogleGraphUtils'
-import Grid from 'material-ui/Grid'
 
-const makeUserSleep = (userId, sleepIdArray, state) => {
+import Grid from 'material-ui/Grid'
+import Typography from 'material-ui/Typography'
+
+import ChartActionBar from './Charts/ChartActionBar'
+import ChartFilter from './Charts/ChartFilter'
+import GoogleChart from './Charts/GoogleChart'
+import { preProcessData } from './Charts/GoogleGraphUtils'
+
+import WithCard from './Decorators/WithCard'
+
+import ProgressBar from './ProgressBar'
+
+const makeUserSleep = (userId, user, sleepIdArray, state) => {
+
   return {
     user: userId,
+    label: user.profile.first + ' ' + user.profile.last,
     sleeps: sleepIdArray.map((id) => {
       return state.entities.sleeps[id]
     })
@@ -33,6 +41,7 @@ const mapStateToProps = (state, ownProps) => {
   const cached = state.sleeps.transitInfo.cached || false
   let patientArr = []
   let userSleeps = []
+  let patients = []
 
   // wait until the action is cached
   if(cached) {
@@ -45,18 +54,22 @@ const mapStateToProps = (state, ownProps) => {
 
     patientArr.forEach(elem => {
       const sleepArrOfIds = sleepsByUser[elem]
-      const userData = makeUserSleep(elem, sleepArrOfIds, state)
+      const user = state.entities.users[elem]
+      const userData = makeUserSleep(elem, user, sleepArrOfIds, state)
       userSleeps.push(userData)
+      patients.push(user)
     })
   }
 
   return {
-    patients: patientArr,
+    patients: patients,
     sleeps: userSleeps,
     fetching: fetching,
     cached: cached
   }
 }
+
+const Chart = WithCard(GoogleChart)
 
 //  ----------------------------------
 //  SLEEP PANEL
@@ -82,7 +95,7 @@ class SleepManager extends React.Component {
 
   dataIsReady = () => {
     const { fetching, cached } = this.props
-    console.log('fetching cached: ', fetching, cached)
+    //console.log('fetching cached: ', fetching, cached)
     return (!fetching && cached)
   }
 
@@ -100,9 +113,7 @@ class SleepManager extends React.Component {
 
   onActionBarChange = (name, value) => {
     console.log('selection changed: ', name, value)
-    this.setState({
-      selectedSleepField: value
-    })
+    this.setState({ [name]: value})
   }
 
   render() {
@@ -111,12 +122,17 @@ class SleepManager extends React.Component {
     const { selectedSleepField } = this.state
 
     if (!this.dataIsReady()) {
-      return <h1><i>{fetching} Loading sleeps...</i></h1>
+      const title = 'Loading Sleeps'
+      const subTitle = 'please wait. Loading...'
+      return <ProgressBar title={title} subTitle={subTitle}/>
     }
 
     console.log('sleeps: ', sleeps)
     const SleepParser = makeSleepParser(selectedSleepField)
-    const refinedSleeps = this.refineSleepData(sleeps)
+    // need to add column label to sleeps
+
+    //const refinedSleeps = this.refineSleepData(sleeps)
+    const refinedSleeps = sleeps
     const graphData = preProcessData(refinedSleeps, SleepParser)
 
     const ActionBarProps = {
@@ -126,25 +142,28 @@ class SleepManager extends React.Component {
     }
 
     const start = 'Start'
-    const defaultValue = '2017-05-05'
+    const defaultStart = '2017-01-01'
+    const defaultEnd = '2018-01-01'
+    const chartFilterTitle = 'filter chart'
+
+    // same patients as is seen on chart
 
     return (    
       <div>
-      	<h1>sleeps manager</h1>
         <Grid container spacing={8}>
-          <Grid item xs={12} md={4}>
+          <Grid item xs={12} md={12}>
             <ChartActionBar
               name={ActionBarProps.name}
               helperText={ActionBarProps.helperText}
               arrayFields={ActionBarProps.arrayFields}
+              start={defaultStart}
+              end={defaultEnd}
               onChange={this.onActionBarChange}
             />
           </Grid>
-          <Grid item xs={12} md={4}>
-            <DatePicker label={start} defaultValue={defaultValue}/>
-          </Grid>          
-        </Grid>                      
+        </Grid>       
         <GoogleChart data={graphData} objParser={SleepParser} />
+        <ChartFilter label={chartFilterTitle} listData={patients} />
       </div>
     )    
   }

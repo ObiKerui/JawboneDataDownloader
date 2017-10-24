@@ -10,11 +10,13 @@ import ProfilePanel from '../components/ProfilePanel'
 import GroupPanel from '../components/GroupPanel'
 import GridList from '../components/SummaryList'
 import ListElement from '../components/ListElement'
+import SleepsManager from '../components/SleepsManager'
+import GridTileList from '../components/GridList' // rendered that scrollable list
+import Tabs from '../components/JawboneTabs'
+import TabContainer from '../components/TabContainer'
+import SwipeableViews from 'react-swipeable-views'
 
 import { loadGroups, loadGroup } from '../actions/groupsActions'
-
-
-// import UsersPanel from '../components/UsersPanel'
 
 const styles = {
   card: {
@@ -67,7 +69,26 @@ const mapStateToProps = (state, ownProps) => {
 
 class Dashboard extends React.Component {
 	
+	constructor(props) {
+		super(props)
+
+		this.onTabChange = this.onTabChange.bind(this)
+
+		this.state = {
+			tab: 0
+		}
+	}
+
+	onTabChange = (tabInfo) => {
+		this.setState({ tab: tabInfo.value })
+	}
+
 	render() {
+
+	    const headers = [
+	      'sleeps ',
+	      'moves '
+	    ]
 
 		const testList = [ 1, 2, 3, 4, 5, 6 ]
 		//console.log('groups: ', this.props.groups)
@@ -92,26 +113,24 @@ class Dashboard extends React.Component {
 					</GridList>			
 				</Grid>
 				<Grid item xs={12} sm={7} md={8}>
+				    <Tabs 
+          				headers={headers} 
+          				onTabChange={ this.onTabChange } 
+        			/>
+			        <SwipeableViews index={this.state.tab} onChangeIndex={this.handleChangeIndex}>
+			          	<TabContainer>
+				    		<SleepsManager />
+				    	</TabContainer>
+			          	<TabContainer>
+			            	the moves here
+			          	</TabContainer>
+			        </SwipeableViews>
+
 					<GroupPanel />
 					<h1>users summary</h1>
 				</Grid>
 	        </Grid>                
 		)
-
-		// return (
-	 //        <Grid container spacing={24}>
-	 //        	<Grid item xs={12}>
-	 //          	</Grid>
-		// 		<Grid item xs={12} sm={5} md={4}>
-		// 			<ProfilePanel />
-		// 		</Grid>
-		// 		<Grid item xs={12} sm={7} md={8}>
-		// 			<Route name='groups' exact path='/groups/summary' component={GroupsPanel} />
-		// 			<Route name='users' path='/users/summary' component={UsersPanel} />
-		// 		</Grid>
-	 //        </Grid>                
-		// )		
-
 	}
 }
 
