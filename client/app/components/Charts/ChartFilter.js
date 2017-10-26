@@ -13,6 +13,9 @@ import ExpandMoreIcon from 'material-ui-icons/ExpandMore';
 import Typography from 'material-ui/Typography'
 import classNames from 'classnames'
 import GridList from '../GridList'
+import { compose } from 'recompose'
+import { BasicList, BasicListStyle } from '../Lists/BasicList'
+import FilterPlotElement from './FilterPlotElement'
 
 const styles = theme => ({
   card: {
@@ -32,7 +35,7 @@ const styles = theme => ({
     transform: 'rotate(180deg)',
   },
   avatar: {
-    backgroundColor: red[500],
+    backgroundColor: red[100],
   },
   flexGrow: {
     flex: '1 1 auto',
@@ -43,16 +46,74 @@ const styles = theme => ({
   }  
 });
 
+const ChartFilterListStyles = theme => ({
+  container: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    justifyContent: 'space-around',
+    overflow: 'hidden',
+    background: theme.palette.background.paper,
+  },
+  gridList: {
+    width: 500,
+    height: 450,
+  },
+  media: {
+    height: 200,
+  },
+  paper: {
+    padding: 16,
+    textAlign: 'center',
+    color: theme.palette.text.secondary,
+  },
+  bigAvatar: {
+    width: 60,
+    height: 60,
+  },
+  card: {
+    [theme.breakpoints.down('sm')]: {
+      width: '100% !important', // Overrides inline-style
+      height: 100,
+    },
+    '&:hover': {
+      backgroundColor: red[100],
+      cursor: 'pointer'
+    }
+  }  
+})
+
+const ChartFilterList = compose(
+  withStyles(ChartFilterListStyles),
+  BasicList
+)(FilterPlotElement)
+
+//  ------------------------------------------------------
+//  CHART FILTER
+//  ------------------------------------------------------
 class ChartFilter extends React.Component {
   state = { expanded: false };
 
   handleExpandClick = () => {
     this.setState({ expanded: !this.state.expanded });
-  };
+  }
 
   render() {
 
-    const { classes, label, listData } = this.props;
+    const { classes, label, plotStruct, onClickHandler } = this.props
+    const { plots } = plotStruct
+    //console.log('plots to chart filter: ', plots)
+
+    const listData = plots.map((item, i) => {
+      const { plotLabel, plotSubtitle, active } = item
+      //console.log('plot label : active: ', plotLabel, plotSubtitle, active)
+      return {
+        plotLabel,
+        plotSubtitle,
+        active
+      }
+    })
+
+    //console.log('listdata: ', listData)
 
     return (
       <div>
@@ -83,7 +144,7 @@ class ChartFilter extends React.Component {
           </CardActions>
           <Collapse in={this.state.expanded} transitionDuration="auto" unmountOnExit>
             <CardContent>
-              <GridList listData={listData} />
+              <ChartFilterList listData={listData} onClickHandler={onClickHandler} />
             </CardContent>
           </Collapse>
         </Card>

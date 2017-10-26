@@ -4,7 +4,7 @@ class SleepParser extends ObjParser {
     constructor(prop) {
     	super(prop)
 
-    	console.log('prop to sleep parser: ', prop)
+    	//console.log('prop to sleep parser: ', prop)
     }
 
     getValue(obj) {

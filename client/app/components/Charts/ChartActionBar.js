@@ -121,7 +121,7 @@ class ChartPlotDropDown extends React.Component {
           <InputLabel htmlFor="char-plot-dropdown">{name}</InputLabel>
           <Select
             value={this.state.metric}
-            onChange={this.handleChange('metric')}
+            onChange={this.handleChange('selectedSleepField')}
             input={<Input id="char-plot-dropdown" />}
           >
             {menuItems}

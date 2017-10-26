@@ -13,22 +13,11 @@ import Typography from 'material-ui/Typography'
 import ChartActionBar from './Charts/ChartActionBar'
 import ChartFilter from './Charts/ChartFilter'
 import GoogleChart from './Charts/GoogleChart'
-import { preProcessData } from './Charts/GoogleGraphUtils'
+import { preProcessData, makeOptions, makePlot, makePlotStruct } from './Charts/GoogleGraphUtils'
 
 import WithCard from './Decorators/WithCard'
 
 import ProgressBar from './ProgressBar'
-
-const makeUserSleep = (userId, user, sleepIdArray, state) => {
-
-  return {
-    user: userId,
-    label: user.profile.first + ' ' + user.profile.last,
-    sleeps: sleepIdArray.map((id) => {
-      return state.entities.sleeps[id]
-    })
-  }
-}
 
 //  ----------------------------------
 //  mapping from store state to props
@@ -40,7 +29,7 @@ const mapStateToProps = (state, ownProps) => {
   const fetching = state.sleeps.transitInfo.fetching || false
   const cached = state.sleeps.transitInfo.cached || false
   let patientArr = []
-  let userSleeps = []
+  let plots = []
   let patients = []
 
   // wait until the action is cached
@@ -52,18 +41,27 @@ const mapStateToProps = (state, ownProps) => {
       }
     }
 
-    patientArr.forEach(elem => {
-      const sleepArrOfIds = sleepsByUser[elem]
-      const user = state.entities.users[elem]
-      const userData = makeUserSleep(elem, user, sleepArrOfIds, state)
-      userSleeps.push(userData)
+    patientArr.forEach(userId => {
+      const sleepArrOfIds = sleepsByUser[userId]
+      const user = state.entities.users[userId]
+      
+      const plot = makePlot(
+        null,
+        user.profile.first + ' ' + user.profile.last,
+        user.createdAt,
+        false,
+        sleepArrOfIds.map((id) => {
+          return state.entities.sleeps[id]
+        }))
+
+      plots.push(plot)
       patients.push(user)
     })
   }
 
   return {
     patients: patients,
-    sleeps: userSleeps,
+    plots: plots,
     fetching: fetching,
     cached: cached
   }
@@ -81,34 +79,66 @@ class SleepManager extends React.Component {
 
     this.state = {
       tab: 0,
-      selectedSleepField: 0
+      selectedSleepField: 0,
+      plotStruct : makePlotStruct(
+        '2017-01-01',
+        '2018-01-01',
+        null,
+        null,
+        []
+      )
     }
   }
 
-  componentWillMount() {
+  componentDidMount() {
     const { loadSleeps } = this.props
     loadSleeps()    
   }
 
+  shouldComponentUpdate(nextProps, nextState) {
+    if(!this.dataIsReady(nextProps)) {
+      return false
+    }
+    return true
+  }
+
   componentWillReceiveProps(nextProps) {
+    if(!this.dataIsReady(nextProps)) {
+      return
+    }
+
+    const { selectedSleepField } = this.state
+    const { plots } = nextProps
+
+    let plotStruct = makePlotStruct(
+      '2017-01-01',
+      '2018-01-01',
+      makeOptions(true, 'date', 'something'),
+      makeSleepParser(selectedSleepField),
+      plots
+    )
+
+    plotStruct = this.refinePlotStruct(plotStruct)
+
+    this.setState({
+      plotStruct
+    })
   }  
 
-  dataIsReady = () => {
-    const { fetching, cached } = this.props
-    //console.log('fetching cached: ', fetching, cached)
+  dataIsReady = (props) => {
+    const { fetching, cached } = props
     return (!fetching && cached)
   }
 
-  refineSleepData = (sleepData) => {
-    let elem = []
-    
-    for(var i = 0; i < sleepData.length; i++) {
-      let curr = sleepData[i].sleeps || []
-      if(curr.length > 0) {
-        elem.push(sleepData[i]) 
-      }
-    }
-    return elem
+  refinePlotStruct = (plotStruct) => {
+    // let { plots } = plotStruct
+
+    // console.log('plots: ', plots)
+
+    // let [ plot ] = plots
+    // plot.active = true
+
+    return plotStruct
   }
 
   onActionBarChange = (name, value) => {
@@ -116,34 +146,37 @@ class SleepManager extends React.Component {
     this.setState({ [name]: value})
   }
 
+  onClickHandler = (index) => {
+    let { plots } = this.state.plotStruct
+    let plot = plots[index]    
+    plot.active = !plot.active
+    this.setState({
+      plotStruct: this.state.plotStruct
+    })    
+  }
+
   render() {
 
-    const { classes, patients, sleeps, fetching } = this.props
-    const { selectedSleepField } = this.state
+    const { classes, patients, plots, fetching } = this.props
+    const { selectedSleepField, plotStruct } = this.state
+    const { parser } = plotStruct
 
-    if (!this.dataIsReady()) {
+    //console.log('state: ', this.state)
+
+    if (!this.dataIsReady(this.props)) {
       const title = 'Loading Sleeps'
       const subTitle = 'please wait. Loading...'
       return <ProgressBar title={title} subTitle={subTitle}/>
     }
 
-    console.log('sleeps: ', sleeps)
-    const SleepParser = makeSleepParser(selectedSleepField)
-    // need to add column label to sleeps
-
-    //const refinedSleeps = this.refineSleepData(sleeps)
-    const refinedSleeps = sleeps
-    const graphData = preProcessData(refinedSleeps, SleepParser)
+    const graphData = preProcessData(plotStruct)
 
     const ActionBarProps = {
       name : 'Sleep Metric',
       helperText : 'Choose a sleep metric to view',
-      arrayFields : SleepParser.makeDropDownFields()
+      arrayFields : parser.makeDropDownFields()
     }
 
-    const start = 'Start'
-    const defaultStart = '2017-01-01'
-    const defaultEnd = '2018-01-01'
     const chartFilterTitle = 'filter chart'
 
     // same patients as is seen on chart
@@ -156,14 +189,14 @@ class SleepManager extends React.Component {
               name={ActionBarProps.name}
               helperText={ActionBarProps.helperText}
               arrayFields={ActionBarProps.arrayFields}
-              start={defaultStart}
-              end={defaultEnd}
+              start={plotStruct.start}
+              end={plotStruct.end}
               onChange={this.onActionBarChange}
             />
           </Grid>
         </Grid>       
-        <GoogleChart data={graphData} objParser={SleepParser} />
-        <ChartFilter label={chartFilterTitle} listData={patients} />
+        <GoogleChart chart={graphData} />
+        <ChartFilter label={chartFilterTitle} plotStruct={plotStruct} onClickHandler={this.onClickHandler} />
       </div>
     )    
   }

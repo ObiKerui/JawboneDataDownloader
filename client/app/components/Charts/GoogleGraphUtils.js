@@ -2,6 +2,19 @@ import Moment from 'moment'
 import times from 'lodash/times'
 import constant from 'lodash/constant'
 
+// Need data of the following format:
+//{
+//  start: date,
+//  end: date,
+//  parser: ObjParser,
+//  plots: [
+//    plotInfo: obj, plotLabel: label, active: true|false, plotPoints: [dataObjs],
+//    plotInfo: obj, plotLabel: label, active: true|false, plotPoints: [dataObjs],
+//    ...
+//    plotInfo: obj, plotLabel: label, active: true|false, plotPoints: [dataObjs],
+//  ]
+//} 
+
 class ObjParser {
     constructor(prop) {
         this.prop = prop;
@@ -32,11 +45,6 @@ const getDateArray = (start, end, interval, increment) => {
   return dateArray
 }
 
-//  -------------------------------------------------
-//
-//  -------------------------------------------------
-const extractPlotData = ({ sleeps }) => sleeps
-
 const findDate = (elem, index, array) => {
   const dateInRange = Moment(elem)
   //const dateInSleep = Moment(this.date)
@@ -54,10 +62,10 @@ const createPlot = (range, plot) => {
   let resultArr = times(range.length, constant(null));
 
   // retrieve the data we need
-  const plotDataArr = extractPlotData(plot)
+  const { plotPoints } = plot
 
   // for each sleep data object
-  plotDataArr.forEach(elem => {
+  plotPoints.forEach(elem => {
     const idx = range.findIndex((element, index, arr) => {
       const dateInRange = Moment(element)
       const dateInSleep = Moment(elem.date, 'YYYYMMDD')
@@ -77,9 +85,12 @@ const createPlot = (range, plot) => {
 const transformArrays = (arrs, objParser) => {
   let result = []
   const [ hAxisValues ] = arrs
+
   hAxisValues.forEach(value => {
     result.push([value])
   })
+
+  //console.log('obj parser: ', objParser)
 
   for(var i = 1; i < arrs.length; i++) {
     const arr = arrs[i]
@@ -92,8 +103,6 @@ const transformArrays = (arrs, objParser) => {
     }
   }
 
-  //console.log('result so far: ', result)
-
   return result
 }
 
@@ -101,8 +110,14 @@ const transformArrays = (arrs, objParser) => {
 //
 //  -------------------------------------------------
 const preProcessRows = (range, plots) => {
+
   let arrs = [ range ]
   plots.forEach(plot => {
+
+    if(!plot.active) {
+      return
+    }
+
     const plotArr = createPlot(range, plot)
     arrs.push(plotArr)
   })
@@ -118,38 +133,60 @@ const preProcessCols = (hAxisType, plots) => {
   result.push(hAxisType)
 
   plots.forEach(plot => {
+
+    if(!plot.active) {
+      return
+    }
+
     result.push({
       type: 'number',
-      label: plot.label || 'label'
+      label: plot.plotLabel || 'label'
     })
   })
+
   return result
+}
+
+//  -------------------------------------------------
+//  preprocess the options 
+//  -------------------------------------------------
+const preProcessOptions = (options) => {
+  const { showLegend, hAxisTitle, vAxisTitle } = options
+
+  let newOptions = {
+    hAxis: { title: hAxisTitle, minValue: 0, maxValue: 1 },
+    vAxis: { title: vAxisTitle, minValue: 0, maxValue: 1 },
+    legend: showLegend
+  }
+
+  return newOptions
 }
 
 //  -------------------------------------------------
 //	check is array, maybe supply a function to check 
 //	can parse too
 //  -------------------------------------------------
-const validInputPlots = (plots) => {
-	if(Array.isArray(plots)) {
-    	return true
-    } 
-    return false
+const noActiveRows = (plots) => {
+  for(let i = 0; i < plots.length; i++) {
+    if(plots[i].active) {
+      return false
+    }
+  }
+  return true
 }
 
 //  -------------------------------------------------
 //
 //  -------------------------------------------------
-const preProcessData = (plots, objParser) => {
+const preProcessData = (plotStruct) => {
 
-	if(!validInputPlots(plots)) {
-		throw new TypeError('not a valid formed set of props to graph utils')		
-	}
+  const { start, end, parser, plots, options } = plotStruct
+
+  console.log('what is plotstruct: ', plotStruct)
 
 	// create an array of dates from startDate to endData called range
-	const str = '2017-03-01'
-	const startDate = Moment(str)
-	const endDate = Moment(str).add(10, 'months')
+	const startDate = Moment(start)
+	const endDate = Moment(end)
 	const range = getDateArray(startDate, endDate, 'days', 1)
 
 	const hAxisType = {
@@ -159,17 +196,53 @@ const preProcessData = (plots, objParser) => {
 
 	const cols = preProcessCols(hAxisType, plots)
 	const preRows = preProcessRows(range, plots)
-	const rows = transformArrays(preRows, objParser)
+	const rows = transformArrays(preRows, parser)
+  const procOpts = preProcessOptions(options)
 
-	console.log('rows: ', rows)
+  if(noActiveRows(plots)) {
+    let amendedRows = []
+    rows.forEach(row => {
+      const [ rowdata ] = row
+      amendedRows.push([rowdata, 0])
+    }) 
+
+    let amendedCols = []
+    amendedCols.push(cols[0])
+    amendedCols.push({ type: 'number', label: 'number' })
+
+    let amendedOptions = procOpts
+    amendedOptions.legend = 'none'
+
+    return {
+      columns: amendedCols,
+      rows: amendedRows,
+      options: amendedOptions
+    }
+  }
 
 	return {
-		cols: cols,
-		rows: rows
+		columns: cols,
+		rows,
+    options: procOpts
 	}
+}
+
+const makeOptions = (showLegend, hAxisTitle, vAxisTitle) => {
+  return { showLegend, hAxisTitle, vAxisTitle }
+}
+
+const makePlot = (plotImage, plotLabel, plotSubtitle, active, plotPoints) => {
+  return { plotImage, plotLabel, plotSubtitle, active, plotPoints }
+}
+
+const makePlotStruct = (start, end, options, parser, plots ) => {
+  return { start, end, options, parser, plots }
 }
 
 export {
 	ObjParser,
-	preProcessData
+	preProcessData,
+  makeOptions,
+  makePlot,
+  makePlotStruct
 }

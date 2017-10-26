@@ -91,11 +91,6 @@ class Dashboard extends React.Component {
 	    ]
 
 		const testList = [ 1, 2, 3, 4, 5, 6 ]
-		//console.log('groups: ', this.props.groups)
-		//console.log('patients: ', this.props.patients)
-
-		//const RecentGroups = SummList(ListItem)(testList)
-		//const RecentUsers = SummList(ListItem)(testList)
 
 		return (
 	        <Grid container spacing={24}>
